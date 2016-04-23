@@ -1,6 +1,7 @@
 package com.kumuluz.ee.common;
 
 import javax.servlet.Servlet;
+import java.net.MalformedURLException;
 import java.util.EventListener;
 import java.util.Map;
 
@@ -16,5 +17,5 @@ public interface ServletServer extends KumuluzServer {
 
     void registerListener(EventListener listener);
 
-    void initWebContext();
+    void initWebContext() throws MalformedURLException;
 }

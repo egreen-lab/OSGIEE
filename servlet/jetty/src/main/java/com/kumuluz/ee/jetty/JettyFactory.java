@@ -31,10 +31,7 @@ public class JettyFactory {
 
     private ServerConfig serverConfig;
 
-    public JettyFactory() {
 
-        this.serverConfig = new ServerConfig();
-    }
 
     public JettyFactory(ServerConfig serverConfig) {
 

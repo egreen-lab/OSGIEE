@@ -4,8 +4,10 @@ import com.kumuluz.ee.common.Component;
 import com.kumuluz.ee.common.KumuluzServer;
 import com.kumuluz.ee.common.ServletServer;
 import com.kumuluz.ee.common.config.EeConfig;
+import com.kumuluz.ee.common.config.RunTimeParameters;
 import com.kumuluz.ee.common.dependencies.*;
 import com.kumuluz.ee.common.exceptions.KumuluzServerException;
+import com.kumuluz.ee.common.exceptions.ServerStartException;
 import com.kumuluz.ee.common.utils.ResourceUtils;
 import com.kumuluz.ee.common.wrapper.ComponentWrapper;
 import com.kumuluz.ee.common.wrapper.EeComponentWrapper;
@@ -13,6 +15,7 @@ import com.kumuluz.ee.common.wrapper.KumuluzServerWrapper;
 import com.kumuluz.ee.loaders.ComponentLoader;
 import com.kumuluz.ee.loaders.ServerLoader;
 
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public class EeApplication {
 
-    private Logger log = Logger.getLogger(EeApplication.class.getSimpleName());
+    private static final Logger LOGGER = Logger.getLogger(EeApplication.class.getSimpleName());
 
     private EeConfig eeConfig;
 
@@ -34,14 +37,14 @@ public class EeApplication {
 
     private List<EeComponentWrapper> eeComponents;
 
-    public EeApplication() {
+    public EeApplication(RunTimeParameters runTimeParameters) throws ServerStartException, MalformedURLException {
 
-        this.eeConfig = new EeConfig();
+        this.eeConfig = new EeConfig(runTimeParameters);
 
         initialize();
     }
 
-    public EeApplication(EeConfig eeConfig) {
+    public EeApplication(EeConfig eeConfig) throws MalformedURLException {
 
         this.eeConfig = eeConfig;
 
@@ -50,23 +53,30 @@ public class EeApplication {
 
     public static void main(String args[]) {
 
-        EeApplication app = new EeApplication();
+
+        RunTimeParameters runTimeParameters = RunTimeParameters.RunTimeParameterBuilder.getParameters(args);
+
+        try {
+            EeApplication app = new EeApplication(runTimeParameters);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public void initialize() {
+    public void initialize() throws MalformedURLException {
 
-        log.info("Initializing KumuluzEE");
+        LOGGER.info("Initializing KumuluzEE");
 
-        log.info("Checking for requirements");
+        LOGGER.info("Checking for requirements");
 
         checkRequirements();
 
-        log.info("Checks passed");
+        LOGGER.info("Checks passed");
 
-        log.info("Initializing components");
+        LOGGER.info("Initializing components");
 
         // Loading the kumuluz server and extracting its metadata
-        KumuluzServer kumuluzServer = ServerLoader.loadServletServer();
+        KumuluzServer kumuluzServer = ServerLoader.loadServletServer(eeConfig.getServerConfig());
         processKumuluzServer(kumuluzServer);
 
         // Loading all the present components, extracting their metadata and process dependencies
@@ -88,17 +98,17 @@ public class EeApplication {
         // Initiate every found component in the order specified by the components dependencies
         for (EeComponentWrapper cw : eeComponents) {
 
-            log.info("Found EE component " + cw.getType().getName() + " implemented by " + cw.getName());
+            LOGGER.info("Found EE component " + cw.getType().getName() + " implemented by " + cw.getName());
 
             cw.getComponent().init(server, eeConfig);
             cw.getComponent().load();
         }
 
-        log.info("Components initialized");
+        LOGGER.info("Components initialized");
 
         server.getServer().startServer();
 
-        log.info("KumuluzEE started successfully");
+        LOGGER.info("KumuluzEE started successfully");
     }
 
     private void processKumuluzServer(KumuluzServer kumuluzServer) {
@@ -128,7 +138,7 @@ public class EeApplication {
                             "Please check to make sure you only include a single implementation of a specific " +
                             "EE component.";
 
-                    log.severe(msg);
+                    LOGGER.severe(msg);
 
                     throw new KumuluzServerException(msg);
                 }
@@ -140,7 +150,7 @@ public class EeApplication {
             }
         }
 
-        log.info("Processing EE component dependencies");
+        LOGGER.info("Processing EE component dependencies");
 
         // Check if all dependencies are fulfilled
         for (EeComponentWrapper cmp : eeComp.values()) {
@@ -166,7 +176,7 @@ public class EeApplication {
                             " implemented by " + cmp.getName() + " requires " + dep.value().getName() + ", which was not " +
                             "found. Please make sure to include the required component.";
 
-                    log.severe(msg);
+                    LOGGER.severe(msg);
 
                     throw new KumuluzServerException(msg);
                 }
@@ -180,7 +190,7 @@ public class EeApplication {
                             Arrays.toString(dep.implementations()) + ". Please make sure you use one of the " +
                             "implementations required by this component.";
 
-                    log.severe(msg);
+                    LOGGER.severe(msg);
 
                     throw new KumuluzServerException(msg);
                 }
@@ -211,7 +221,7 @@ public class EeApplication {
                             Arrays.toString(dep.implementations()) + ". Please make sure you use one of the " +
                             "implementations required by this component.";
 
-                    log.severe(msg);
+                    LOGGER.severe(msg);
 
                     throw new KumuluzServerException(msg);
                 }
@@ -221,9 +231,9 @@ public class EeApplication {
         eeComponents = eeComp.values().stream().collect(Collectors.toList());
     }
 
-    private void checkRequirements() {
+    private void checkRequirements() throws MalformedURLException {
 
-        if (ResourceUtils.getProjectWebResources() == null) {
+        if (ResourceUtils.getProjectWebResources(eeConfig.getServerConfig().getWebappPath()) == null) {
 
             throw new IllegalStateException("No 'webapp' directory found in the projects " +
                     "resources folder. Please add it to your resources even if it will be empty " +
@@ -232,7 +242,7 @@ public class EeApplication {
                     "projects as some IDEs don't build the project if its empty");
         }
 
-        if (ResourceUtils.isRunningInJar()) {
+        if (ResourceUtils.isRunningInJar(eeConfig.getServerConfig().getWebappPath())) {
 
             throw new RuntimeException("Running in a jar is currently not supported yet. Please " +
                     "build the application with the 'maven-dependency' plugin to explode your app" +

@@ -12,6 +12,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import java.net.MalformedURLException;
 import java.util.EventListener;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -78,7 +79,7 @@ public class JettyServletServer implements ServletServer {
     }
 
     @Override
-    public void initWebContext() {
+    public void initWebContext() throws MalformedURLException {
 
         if (server == null)
             throw new IllegalStateException("Jetty has to be initialized before adding a web " +
@@ -93,7 +94,7 @@ public class JettyServletServer implements ServletServer {
 
         appContext.setParentLoaderPriority(true);
 
-        appContext.setResourceBase(ResourceUtils.getProjectWebResources());
+        appContext.setResourceBase(ResourceUtils.getProjectWebResources(getServerConfig().getWebappPath()));
 
         appContext.setContextPath(serverConfig.getContextPath());
 

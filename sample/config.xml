@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<serverConfig>
+    <contextPath>/</contextPath>
+    <idleTimeout>3600000</idleTimeout>
+    <maxThreads>100</maxThreads>
+    <minThreads>5</minThreads>
+    <port>8080</port>
+    <soLingerTime>-1</soLingerTime>
+    <webappPath>/home/dewmal/projects/Production/OSGIEE/sample/webapp</webappPath>
+</serverConfig>

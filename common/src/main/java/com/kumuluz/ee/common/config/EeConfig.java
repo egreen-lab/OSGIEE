@@ -1,5 +1,8 @@
 package com.kumuluz.ee.common.config;
 
+import com.kumuluz.ee.common.exceptions.ServerStartException;
+
+import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,12 +12,14 @@ import java.util.List;
  */
 public class EeConfig {
 
-    private ServerConfig serverConfig = new ServerConfig();
+
+
+    private ServerConfig serverConfig;
 
     private List<PersistenceConfig> persistenceConfigs = new ArrayList<>();
 
-    public EeConfig() {
-
+    public EeConfig(RunTimeParameters runTimeParameters) throws ServerStartException {
+        serverConfig=new ServerConfig.Builder().getXMLServerConfig(runTimeParameters.getServerConfigPath());
         persistenceConfigs.add(new PersistenceConfig());
     }
 

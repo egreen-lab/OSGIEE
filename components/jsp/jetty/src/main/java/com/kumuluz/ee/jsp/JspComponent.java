@@ -25,7 +25,6 @@ public class JspComponent implements Component {
 
     @Override
     public void load() {
-
         log.info("Initiating Jetty Apache Jasper");
     }
 }

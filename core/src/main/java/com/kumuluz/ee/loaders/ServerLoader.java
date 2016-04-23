@@ -1,6 +1,7 @@
 package com.kumuluz.ee.loaders;
 
 import com.kumuluz.ee.common.KumuluzServer;
+import com.kumuluz.ee.common.config.ServerConfig;
 import com.kumuluz.ee.common.dependencies.ServerDef;
 import com.kumuluz.ee.common.exceptions.KumuluzServerException;
 import com.kumuluz.ee.common.wrapper.KumuluzServerWrapper;
@@ -19,7 +20,7 @@ public class ServerLoader {
 
     private static Logger log = Logger.getLogger(ServerLoader.class.getSimpleName());
 
-    public static KumuluzServer loadServletServer() {
+    public static KumuluzServer loadServletServer(ServerConfig serverConfig) {
 
         log.info("Loading the KumuluzEE server...");
 
@@ -32,6 +33,10 @@ public class ServerLoader {
                     " dependency. For additional servers refer to the documentation.";
 
             log.severe(msg);
+
+
+
+
 
             throw new KumuluzServerException(msg);
         }
@@ -60,6 +65,8 @@ public class ServerLoader {
             log.severe(msg);
 
             throw new KumuluzServerException(msg);
+        }else{
+            server.setServerConfig(serverConfig);
         }
 
         log.info("Found " + serverDef.value());
